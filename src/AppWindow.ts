@@ -5,7 +5,7 @@ export class AppWindow {
 	protected mainWindow: OWWindow;
 	protected maximized: boolean = false;
 
-	constructor(windowName) {
+	constructor(windowName: string) {
 		this.mainWindow = new OWWindow("background");
 		this.currWindow = new OWWindow(windowName);
 	}
