@@ -8,7 +8,7 @@ class CoreLogic {
 	public gameOpen: boolean = false;
 	private messageListener;
 
-	constructor() {
+	private InitializePOIs() {
 		let scorched = new Polygon(
 			[
 				new Vector2(9102.52, 9336.73),
@@ -24,7 +24,7 @@ class CoreLogic {
 			],
 			new Vector2(8926.05, 9221.44)
 		);
-		this.POIs.push(new POI("scorched", "Scorched Mines", scorched));
+		this.POIs.push(new POI("scorched", "Scorched Mines", scorched, this));
 
 		let myrkguard = new Polygon(
 			[
@@ -44,7 +44,7 @@ class CoreLogic {
 			],
 			new Vector2(9736.37, 9531.77)
 		);
-		this.POIs.push(new POI("myrkguard", "Myrkguard", myrkguard));
+		this.POIs.push(new POI("myrkguard", "Myrkguard", myrkguard, this));
 
 		let forecastle = new Polygon(
 			[
@@ -58,7 +58,7 @@ class CoreLogic {
 			],
 			new Vector2(11487.3, 2789.36)
 		);
-		this.POIs.push(new POI("forecastle", "Forecastle", forecastle));
+		this.POIs.push(new POI("forecastle", "Forecastle", forecastle, this));
 
 		let eternal = new Polygon(
 			[
@@ -72,7 +72,7 @@ class CoreLogic {
 			],
 			new Vector2(10975.92, 3833.77)
 		);
-		this.POIs.push(new POI("eternal", "Eternal Pools", eternal));
+		this.POIs.push(new POI("eternal", "Eternal Pools", eternal, this));
 
 		let imperial = new Polygon(
 			[
@@ -83,7 +83,7 @@ class CoreLogic {
 			],
 			new Vector2(5704.19, 4734.48)
 		);
-		this.POIs.push(new POI("imperial", "Imperial Palace", imperial));
+		this.POIs.push(new POI("imperial", "Imperial Palace", imperial, this));
 
 		let malevolence = new Polygon(
 			[
@@ -95,7 +95,7 @@ class CoreLogic {
 			],
 			new Vector2(11393.78, 7921.28)
 		);
-		this.POIs.push(new POI("malevolence", "Malevolence", malevolence));
+		this.POIs.push(new POI("malevolence", "Malevolence", malevolence, this));
 
 		let mangled = new Polygon(
 			[
@@ -108,7 +108,7 @@ class CoreLogic {
 			],
 			new Vector2(8442.13, 7794.53)
 		);
-		this.POIs.push(new POI("mangled", "Mangled Heights", mangled));
+		this.POIs.push(new POI("mangled", "Mangled Heights", mangled, this));
 
 		let caminus = new Polygon(
 			[
@@ -120,54 +120,45 @@ class CoreLogic {
 			],
 			new Vector2(9498.1, 8669.83)
 		);
-		this.POIs.push(new POI("caminus", "Caminus", caminus));
-		overwolf.windows.onMessageReceived.removeListener(this.messageListener);
-		this.messageListener = overwolf.windows.onMessageReceived.addListener(async (message) => {
-			if (message.id === "resetAccept") {
-				console.log("Received Reset Request");
-				let id = message.content.id;
-				this.POIs.filter((poi) => poi.id === id)[0].resetTime();
-				let server = localStorage.getItem("server");
-				if (server === "true") {
-					let player_name = localStorage.getItem("player_name");
-					if (player_name === null) {
-						player_name = (await this.GetInfo("player_name")).player_name;
-					}
-					axios
-						.post(
-							`https://cooldowns.trentshailer.com/update/${player_name}/${id}/${
-								Date.now() + 1000 * 60 * 60 * 23
-							}`
-						)
-						.catch((error) => {
-							let response = error.response;
-							switch (response.status) {
-								case 404:
-									overwolf.windows.sendMessage(
-										"prompts",
-										"webError",
-										`Your player isn't currently on the server, try toggling the setting off and on again, if that doesn't work contact me at @Fantus-Alt#7417`,
-										() => {}
-									);
-									break;
+		this.POIs.push(new POI("caminus", "Caminus", caminus, this));
+	}
 
-								default:
-									overwolf.windows.sendMessage(
-										"prompts",
-										"webError",
-										`The server may have failed to update your data; code: ${response.status}_3, send this code to @Fantus-Alt#7417`,
-										() => {}
-									);
-									break;
-							}
-						});
+	constructor() {
+		this.InitializePOIs();
+
+		overwolf.windows.onMessageReceived.removeListener(this.messageListener);
+
+		let onMessageReceived = this.OnMessageReceived.bind(this);
+
+		this.messageListener = overwolf.windows.onMessageReceived.addListener(onMessageReceived);
+	}
+
+	public async OnMessageReceived(message: overwolf.windows.MessageReceivedEvent) {
+		const ResetAccept = (content: any) => {
+			Reset({ id: content.id, timestamp: Date.now() + 1000 * 60 * 60 * 23 });
+		};
+
+		const ResetDeny = (content: any) => {
+			let id: string = content.id;
+			for (let i = 0; i < this.POIs.length; i++) {
+				let poi: POI = this.POIs[i];
+				if (poi.id === id) {
+					this.POIs[i].denyTimestamp = Date.now() + 1000 * 60 * 30;
 				}
 			}
-			if (message.id === "enableServer") {
-				let player_name = localStorage.getItem("player_name");
-				if (player_name === null) {
-					player_name = (await this.GetInfo("player_name")).player_name;
-				}
+		};
+
+		const ServerSettingChange = async (content: any) => {
+			let state: boolean = content.state;
+			console.log(state.toString());
+			localStorage.setItem("serverSetting", state.toString());
+
+			let player_name = localStorage.getItem("player_name");
+			if (player_name === null) {
+				player_name = (await this.GetInfo("player_name")).player_name;
+			}
+
+			if (state === true) {
 				let data: Array<{ id: string; timestamp: number }> = new Array();
 				for (let i = 0; i < this.POIs.length; i++) {
 					data.push({ id: this.POIs[i].id, timestamp: this.POIs[i].timestamp });
@@ -182,19 +173,16 @@ class CoreLogic {
 							default:
 								overwolf.windows.sendMessage(
 									"prompts",
-									"webError",
-									`The server may have failed to get your data; code: ${response.status}_1, send this code to @Fantus-Alt#7417`,
+									"info",
+									{
+										message: `The server may have failed to get your data; code: ${response.status}_1, send this code to @Fantus-Alt#7417`,
+									},
 									() => {}
 								);
 								break;
 						}
 					});
-			}
-			if (message.id === "disableServer") {
-				let player_name = localStorage.getItem("player_name");
-				if (player_name === null) {
-					player_name = (await this.GetInfo("player_name")).player_name;
-				}
+			} else {
 				axios
 					.delete(`https://cooldowns.trentshailer.com/delete/${player_name}`)
 					.catch((error) => {
@@ -207,15 +195,46 @@ class CoreLogic {
 								// Other
 								overwolf.windows.sendMessage(
 									"prompts",
-									"webError",
-									`The server may have failed to delete your data; code: ${response.status}_2, send this code to @Fantus-Alt#7417`,
+									"info",
+									{
+										message: `The server may have failed to delete your data; code: ${response.status}_2, send this code to @Fantus-Alt#7417`,
+									},
 									() => {}
 								);
 								break;
 						}
 					});
 			}
-		});
+		};
+
+		const Reset = (content: any) => {
+			let id: string = content.id;
+			let timestamp: number = content.timestamp;
+
+			for (let i = 0; i < this.POIs.length; i++) {
+				let poi: POI = this.POIs[i];
+				if (poi.id === id) {
+					this.POIs[i].SetTimestamp(timestamp);
+					console.log("Sent refresh message");
+					overwolf.windows.sendMessage("in_game", "refresh", "", () => {});
+				}
+			}
+		};
+
+		switch (message.id) {
+			case "manualReset":
+				Reset(message.content);
+				break;
+			case "serverSettingChange":
+				ServerSettingChange(message.content);
+				break;
+			case "resetAccept":
+				ResetAccept(message.content);
+				break;
+			case "resetDeny":
+				ResetDeny(message.content);
+				break;
+		}
 	}
 
 	public async GetInfo(infoWanted: string): Promise<InfoType> {
@@ -242,20 +261,10 @@ class CoreLogic {
 		return await promise;
 	}
 
-	public async LoadData() {
-		for (let i = 0; i < this.POIs.length; i++) {
-			let timestamp: string = localStorage.getItem(this.POIs[i].id);
-			this.POIs[i].timestamp = parseFloat(timestamp === null ? "-1" : timestamp);
-		}
-	}
-
 	public async SaveData() {
-		for (let i = 0; i < this.POIs.length; i++) {
-			let timestamp: number = this.POIs[i].timestamp;
-			// Only save it if it has a real value
-			if (timestamp === -1 || timestamp === undefined || timestamp === null) continue;
-			localStorage.setItem(this.POIs[i].id, timestamp.toString());
-		}
+		this.POIs.forEach((poi) => {
+			poi.SaveTimestamp();
+		});
 	}
 
 	public async OnInteract() {
@@ -265,7 +274,6 @@ class CoreLogic {
 	public async OnGameStart() {
 		this.gameOpen = true;
 		console.log("Game Launched");
-		this.LoadData();
 		this.GetInfo("player_name").then((info) => {
 			localStorage.setItem("player_name", info.player_name);
 		});

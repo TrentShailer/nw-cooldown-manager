@@ -7,8 +7,6 @@ const path = require("path"),
 module.exports = (env) => ({
 	entry: {
 		background: "./src/background/background.ts",
-		in_game: "./src/in_game/in_game.ts",
-		prompts: "./src/prompts/prompts.ts",
 	},
 	devtool: "inline-source-map",
 	module: {
@@ -16,7 +14,11 @@ module.exports = (env) => ({
 			{
 				test: /\.ts?$/,
 				use: "ts-loader",
-				exclude: /node_modules/,
+				exclude: [
+					/node_modules/,
+					path.join(__dirname, "./src/in_game/"),
+					path.join(__dirname, "./src/prompts/"),
+				],
 			},
 		],
 	},
@@ -30,22 +32,16 @@ module.exports = (env) => ({
 	plugins: [
 		new CleanWebpackPlugin(),
 		new CopyPlugin({
-			patterns: [{ from: "public", to: "./" }],
+			patterns: [
+				{ from: "public", to: "./" },
+				{ from: "src/in_game/build", to: "./in_game" },
+				{ from: "src/prompts/build", to: "./prompts" },
+			],
 		}),
 		new HtmlWebpackPlugin({
 			template: "./src/background/background.html",
 			filename: path.resolve(__dirname, "./dist/background.html"),
 			chunks: ["background"],
-		}),
-		new HtmlWebpackPlugin({
-			template: "./src/in_game/in_game.html",
-			filename: path.resolve(__dirname, "./dist/in_game.html"),
-			chunks: ["in_game"],
-		}),
-		new HtmlWebpackPlugin({
-			template: "./src/prompts/prompts.html",
-			filename: path.resolve(__dirname, "./dist/prompts.html"),
-			chunks: ["prompts"],
 		}),
 		new OverwolfPlugin(env),
 	],

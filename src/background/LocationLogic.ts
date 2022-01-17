@@ -14,12 +14,18 @@ function LocationLogic(POIs: Array<POI>) {
 				let isInside: boolean = POIs[i].shape.isPointInside(location);
 				if (isInside) {
 					console.log("Inside " + POIs[i].id);
-					if (Date.now() > POIs[i].timestamp) {
+					if (Date.now() > POIs[i].timestamp && Date.now() > POIs[i].denyTimestamp) {
 						console.log("Prompting for reset of " + POIs[i].id);
 						overwolf.windows.sendMessage(
 							"prompts",
-							"reset",
-							{ name: POIs[i].name, id: POIs[i].id },
+							"action",
+							{
+								message: `Attempting to reset cooldown for ${POIs[i].name}`,
+								acceptID: "resetAccept",
+								denyID: "resetDeny",
+								acceptContent: { id: POIs[i].id },
+								denyContent: { id: POIs[i].id },
+							},
 							() => {}
 						);
 					}

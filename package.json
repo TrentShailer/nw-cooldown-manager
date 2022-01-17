@@ -3,7 +3,8 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
-		"build": "webpack --mode=development --env makeOpk",
+		"build": "cd src/in_game/ && yarn build && cd ../prompts/ && yarn build && cd ../../ && webpack --mode=development --env makeOpk",
+		"buildbackend": "webpack --mode=development --env makeOpk",
 		"dev": "webpack --watch --mode=development",
 		"watch": "webpack --watch --mode=development"
 	},

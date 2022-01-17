@@ -50,10 +50,23 @@ class BackgroundController {
 			this._windows[kWindowNames.prompts].close();
 			this.coreLogic.OnGameClose();
 		} else {
+			this._windows[kWindowNames.inGame].restore().then(() => {
+				this._windows[kWindowNames.inGame].minimize();
+			});
 			this._windows[kWindowNames.prompts].restore().then(() => {
 				setTimeout(() => {
 					console.log("Sent show/hide prompt");
-					overwolf.windows.sendMessage(kWindowNames.prompts, "gameLaunch", "", () => {});
+					overwolf.settings.hotkeys.get((result) => {
+						let hotkey = result.games[21816][0].binding;
+						overwolf.windows.sendMessage(
+							kWindowNames.prompts,
+							"info",
+							{
+								message: `Use <span style="font-family: Roboto Mono; color: #4caf50;">[${hotkey}]</span> to show/hide the in-game window`,
+							},
+							() => {}
+						);
+					});
 				}, 2000);
 			});
 
@@ -66,9 +79,18 @@ class BackgroundController {
 	}
 
 	private async setToggleHotkeyBehavior() {
+		const interactBehaviour = async (
+			hotkeyResult: overwolf.settings.hotkeys.OnPressedEvent
+		) => {
+			console.log(`pressed hotkey for ${hotkeyResult.name}`);
+			if (this.coreLogic.gameOpen) {
+				this.coreLogic.OnInteract();
+			}
+		};
+
 		const toggleInGameWindow = async (
 			hotkeyResult: overwolf.settings.hotkeys.OnPressedEvent
-		): Promise<void> => {
+		) => {
 			console.log(`pressed hotkey for ${hotkeyResult.name}`);
 			const inGameState = await this._windows[kWindowNames.inGame].getWindowState();
 
@@ -85,15 +107,7 @@ class BackgroundController {
 			}
 		};
 
-		const interact = async (
-			hotkeyResult: overwolf.settings.hotkeys.OnPressedEvent
-		): Promise<void> => {
-			console.log(`pressed hotkey for ${hotkeyResult.name}`);
-			if (this.coreLogic.gameOpen) {
-				this.coreLogic.OnInteract();
-			}
-		};
-		OWHotkeys.onHotkeyDown(kHotkeys.interact, interact);
+		OWHotkeys.onHotkeyDown(kHotkeys.interact, interactBehaviour);
 		OWHotkeys.onHotkeyDown(kHotkeys.toggle, toggleInGameWindow);
 	}
 }

@@ -12,5 +12,5 @@
 		"types": ["@overwolf/types"],
 		"rootDirs": ["./src"]
 	},
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "./src/in_game/", "./src/prompts/"]
 }
