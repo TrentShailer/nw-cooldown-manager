@@ -71,6 +71,30 @@ function App() {
 	useEffect(() => {
 		OWHotkeys.onHotkeyDown("nw_cooldown_manager_accept", accept);
 		OWHotkeys.onHotkeyDown("nw_cooldown_manager_deny", deny);
+
+		setTimeout(() => {
+			// Make it adjustable?
+			overwolf.games.getRunningGameInfo((gInfo) => {
+				if (gInfo.success) {
+					let handle = gInfo.monitorHandle.value;
+
+					overwolf.utils.getMonitorsList((mInfo) => {
+						if (mInfo.success) {
+							let monitor = mInfo.displays.filter(
+								(m) => m.handle.value === handle
+							)[0];
+							let factor = monitor.dpiX / 96;
+
+							overwolf.windows.changePosition(
+								"prompts",
+								Math.ceil((gInfo.logicalWidth - 540) / factor),
+								Math.ceil(100 / factor)
+							);
+						}
+					});
+				}
+			});
+		}, 2000);
 	}, []);
 
 	useEffect(() => {

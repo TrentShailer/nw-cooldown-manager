@@ -40,9 +40,25 @@ function App() {
 		initPOIs();
 
 		setTimeout(() => {
-			overwolf.games.getRunningGameInfo((result) => {
-				if (result.success) {
-					overwolf.windows.changePosition("in_game", result.width - 296, 260);
+			// Make it adjustable?
+			overwolf.games.getRunningGameInfo((gInfo) => {
+				if (gInfo.success) {
+					let handle = gInfo.monitorHandle.value;
+
+					overwolf.utils.getMonitorsList((mInfo) => {
+						if (mInfo.success) {
+							let monitor = mInfo.displays.filter(
+								(m) => m.handle.value === handle
+							)[0];
+							let factor = monitor.dpiX / 96;
+
+							overwolf.windows.changePosition(
+								"in_game",
+								Math.ceil((gInfo.logicalWidth - 296) / factor),
+								Math.ceil((gInfo.logicalHeight - 320 - 500) / factor)
+							);
+						}
+					});
 				}
 			});
 		}, 2000);
@@ -75,7 +91,7 @@ function App() {
 				}}
 				ShowCooldowns={ShowCooldowns}
 			/>
-			<div style={{ color: "#616161", position: "absolute", right: 5, bottom: 0 }}>0.2.4</div>
+			<div style={{ color: "#616161", position: "absolute", right: 5, bottom: 0 }}>0.2.5</div>
 		</div>
 	);
 }

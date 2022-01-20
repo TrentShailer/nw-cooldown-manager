@@ -4,7 +4,7 @@
 	"meta": {
 		"name": "New World Cooldown Manager",
 		"author": "Trent Shailer",
-		"version": "0.2.4",
+		"version": "0.2.5",
 		"minimum-overwolf-version": "0.160.0",
 		"description": "View cooldowns for Elite POIs",
 		"dock_button_title": "NW Cooldowns",
@@ -13,7 +13,7 @@
 		"launcher_icon": "icons/desktop-icon.ico",
 		"window_icon": "icons/IconMouseOver.png"
 	},
-	"permissions": ["Hotkeys", "GameInfo", "Web"],
+	"permissions": ["Hotkeys", "GameInfo", "Web", "DesktopStreaming"],
 	"data": {
 		"start_window": "background",
 		"hotkeys": {

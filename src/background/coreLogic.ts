@@ -2,6 +2,7 @@ import { POI } from "./POI";
 import { LocationLogic } from "./LocationLogic";
 import { Polygon, Vector2 } from "./shapes";
 import axios from "axios";
+import { kWindowNames } from "../consts";
 
 class CoreLogic {
 	public POIs: Array<POI> = new Array<POI>();
